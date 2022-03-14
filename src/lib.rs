@@ -102,6 +102,13 @@ pub mod kdtree {
     }
 
     impl<T> KDTree<T> {
+        pub fn new(dim: usize) -> KDTree<T> {
+            let tree: KDTree<T> = KDTree {
+                dim: dim, nodes: Vec::new()
+            };
+            tree
+        }
+
         pub fn size(&self) -> usize {
             self.nodes.len()
         }
