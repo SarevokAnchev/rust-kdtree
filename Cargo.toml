@@ -2,6 +2,6 @@
 name = "rust-kdtree"
 version = "0.1.0"
 authors = ["Louis <louis.rigal4@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
