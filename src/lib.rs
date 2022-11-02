@@ -41,7 +41,7 @@ pub mod kdtree {
                 is_right: true,
                 left: 0,
                 right: 0,
-                data: data
+                data
             };
             node.subspace[self.axis*2] = self.coords[self.axis];
             self.right = id;
@@ -57,7 +57,7 @@ pub mod kdtree {
                 is_right: false,
                 left: 0,
                 right: 0,
-                data: data
+                data
             };
             node.subspace[self.axis*2 + 1] = self.coords[self.axis];
             self.left = id;
@@ -104,7 +104,7 @@ pub mod kdtree {
     impl<T> KDTree<T> {
         pub fn new(dim: usize) -> KDTree<T> {
             let tree: KDTree<T> = KDTree {
-                dim: dim, nodes: Vec::new()
+                dim, nodes: Vec::new()
             };
             tree
         }
@@ -115,7 +115,7 @@ pub mod kdtree {
 
         pub fn add_node(&mut self, coords: &[f64], data: T) -> usize {
             if self.nodes.is_empty() {
-                let inf_subspace = vec![std::f64::NEG_INFINITY, std::f64::INFINITY, std::f64::NEG_INFINITY, std::f64::INFINITY, std::f64::NEG_INFINITY, std::f64::INFINITY];
+                let inf_subspace = vec![f64::NEG_INFINITY, f64::INFINITY, f64::NEG_INFINITY, f64::INFINITY, f64::NEG_INFINITY, f64::INFINITY];
                 self.nodes.push(KDNode {
                 dim: self.dim,
                 coords: coords.to_vec(),
@@ -124,7 +124,7 @@ pub mod kdtree {
                 is_right: true,
                 left: 0,
                 right: 0,
-                data: data
+                data
                 });
                 return 0
             }
@@ -202,6 +202,17 @@ pub mod kdtree {
             Ok(cur_best)
         }
 
+        pub fn nearest_neighbor_range(&self, coords: &[f64], range: f64) -> Result<Vec<usize>, KDTreeError> {
+            if self.nodes.is_empty() {
+                return Err(KDTreeError {msg: "Empty tree.".to_owned()})
+            }
+            let mut ret_nodes: Vec<usize> = Vec::new();
+            let range2 = range*range;
+
+            self.find_best_range(coords, 0, &mut ret_nodes, range2);
+            Ok(ret_nodes)
+        }
+
         fn find_best(&self, coords: &[f64], node_id: usize, cur_best: &mut usize, min_dist: &mut f64) {
             if self.nodes[node_id].subspace_dist2_to_point(coords) > *min_dist {
                 return;
@@ -216,6 +227,19 @@ pub mod kdtree {
             }
             if self.nodes[node_id].left > 0 && self.nodes[self.nodes[node_id].left].subspace_dist2_to_point(coords) < *min_dist {
                 self.find_best(coords, self.nodes[node_id].left, cur_best, min_dist);
+            }
+        }
+
+        fn find_best_range(&self, coords: &[f64], node_id: usize, cur_nodes: &mut Vec<usize>, range_dist: f64) {
+            let cur_dist = self.nodes[node_id].dist2(coords);
+            if cur_dist < range_dist {
+                cur_nodes.push(node_id);
+            }
+            if self.nodes[node_id].right > 0 && self.nodes[self.nodes[node_id].right].subspace_dist2_to_point(coords) < range_dist {
+                self.find_best_range(coords, self.nodes[node_id].right, cur_nodes, range_dist);
+            }
+            if self.nodes[node_id].left > 0 && self.nodes[self.nodes[node_id].left].subspace_dist2_to_point(coords) < range_dist {
+                self.find_best_range(coords, self.nodes[node_id].left, cur_nodes, range_dist);
             }
         }
 
@@ -286,6 +310,11 @@ pub mod kdtree {
             assert_eq!(*tree.get_data(tree.nearest_neighbor(&[7., -2.]).unwrap()).unwrap(), 'E');
             assert_eq!(*tree.get_data(tree.nearest_neighbor(&[3., 3.]).unwrap()).unwrap(), 'F');
             assert_eq!(*tree.get_data(tree.nearest_neighbor(&[5., 3.]).unwrap()).unwrap(), 'B');
+        }
+
+        #[test]
+        fn test_nearest_range() {
+            let tree = create_tree();
         }
     }
 }
