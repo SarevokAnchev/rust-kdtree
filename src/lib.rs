@@ -315,6 +315,9 @@ pub mod kdtree {
         #[test]
         fn test_nearest_range() {
             let tree = create_tree();
+
+            let close_nodes = tree.nearest_neighbor_range(&[2., 5.], 3.).unwrap();
+            assert_eq!(close_nodes.len(), 2);
         }
     }
 }
